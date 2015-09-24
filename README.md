@@ -4,6 +4,7 @@ Herramienta/script para probar el performance de peticiones GET a servicios web(
 Ejecute de la siguiente manera:
 
 ./Parallel_HTTP_GET.sh
+
  +++ Parallel HTTP GET +++
 
 3 Argumentos requeridos:
