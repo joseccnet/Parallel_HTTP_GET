@@ -27,18 +27,19 @@ function descargar
    echo -n ". "
    versionFakeFirefox=$(for i in {20..41}.0; do echo $i; done | sort -R | head -1)
    UserAgentFake="Mozilla/5.0 (Windows NT 6.3; WOW64; rv:34.0) Gecko/20$((RANDOM%(15-10+1)+10))0101 Firefox/$versionFakeFirefox"
-   #response_http_code=$($CURL -o $OutputFile --insecure -A "$UserAgentFake" --silent --head --write-out '%{http_code}' "$URL") #SOLO los HEADERS. Es mas rapida la respuesta.
-   response_http_code=$($CURL -o $OutputFile --insecure -A "$UserAgentFake" --silent --write-out '%{http_code}' "$URL") #Descarga la pagina solicitada.
-   echo "." >> /tmp/httpcodes/respuestas_$response_http_code
-   #echo -n "$1 "
+   #response=$($CURL -o $OutputFile --insecure -A "$UserAgentFake" --silent --head --write-out '%{http_code} %{time_total}' "$URL") #SOLO los HEADERS. Es mas rapida la respuesta.
+   response=$($CURL -o $OutputFile --insecure -A "$UserAgentFake" --silent --write-out '%{http_code} %{time_total}' "$URL") #Descarga la pagina solicitada.
+   echo $response | awk '{print $2}' >> /tmp/httpcodes/respuestas_HTTP_$(echo $response | awk '{print $1}')
+   #echo -n "$1 " #Mostrar el numero de iterancia actual.
 }
 export -f descargar
 
 if [ ! -d /tmp/httpcodes ] ; then
    mkdir /tmp/httpcodes
 fi
-rm -f /tmp/httpcodes/respuestas_* 2> /dev/null
+rm -f /tmp/httpcodes/respuestas_HTTP_* 2> /dev/null
 
+echo -n "Ejecutando "
 date1=$(date +"%s")
 for i in $(seq 1 $numhits); do echo $i; done | xargs -I '{}' -P $numprocesos -n1 bash -c "descargar '{}'" 
 date2=$(date +"%s")
@@ -46,9 +47,13 @@ diff=$(($date2-$date1))
 
 echo -e "\n"
 echo "Estadisticas:"
-wc -l /tmp/httpcodes/respuestas_* | sed 's/\/tmp\/httpcodes\///g'
-rm -f /tmp/httpcodes/respuestas_* 2> /dev/null
-echo -e "\n$(($diff / 60)) minutos y $(($diff % 60)) segundos de ejecucion."
+wc -l /tmp/httpcodes/respuestas_HTTP_* | sed -e 's/\/tmp\/httpcodes\///g' -e 's/_/ /g'
+
+echo -e "\nTiempos de respuesta:"
+cat /tmp/httpcodes/respuestas_HTTP_* | sed 's/,/./g' | awk '{if(min==""){min=max=$1}; if($1>max) {max=$1}; if($1< min) {min=$1}; total+=$1; count+=1} END {print min" segs(minimo) / "total/count" segs(promedio) / " max" segs(maximo)"}'
+
+rm -f /tmp/httpcodes/respuestas_HTTP_* 2> /dev/null
+echo -e "\nTiempo total de ejecucion:\n$(($diff / 60)) minutos y $(($diff % 60)) segundos."
 
 echo -e "\nDone."
 exit 0
