@@ -25,10 +25,10 @@ export numprocesos URL OutputFile CURL
 function descargar
 {
    echo -n ". "
-   versionFakeFirefox=$(for i in {20..41}.0; do echo $i; done | sort -R | head -1)
+   versionFakeFirefox=$(for i in {30..41}.0; do echo $i; done | sort -R | head -1)
    UserAgentFake="Mozilla/5.0 (Windows NT 6.3; WOW64; rv:34.0) Gecko/20$((RANDOM%(15-10+1)+10))0101 Firefox/$versionFakeFirefox"
-   #response=$($CURL -o $OutputFile --insecure -A "$UserAgentFake" --silent --head --write-out '%{http_code} %{time_total}' "$URL") #SOLO los HEADERS. Es mas rapida la respuesta.
-   response=$($CURL -o $OutputFile --insecure -A "$UserAgentFake" --silent --write-out '%{http_code} %{time_total}' "$URL") #Descarga la pagina solicitada.
+   #response=$($CURL -o $OutputFile --connect-timeout 5 --max-time 10 --insecure -A "$UserAgentFake" --silent --head --write-out '%{http_code} %{time_total}' "$URL") #SOLO los HEADERS. Es mas rapida la respuesta.
+   response=$($CURL -o $OutputFile --connect-timeout 5 --max-time 10 --insecure -A "$UserAgentFake" --silent --write-out '%{http_code} %{time_total}' "$URL") #Descarga la pagina solicitada.
    echo $response | awk '{print $2}' >> /tmp/httpcodes/respuestas_HTTP_$(echo $response | awk '{print $1}')
    #echo -n "$1 " #Mostrar el numero de iterancia actual.
 }
